@@ -1,0 +1,12 @@
+<?php
+require_once __DIR__.'/../includes/bootstrap.php'; requireLogin();
+$jobId=(int)($_GET['job_id']??$_POST['job_id']??0); $job=null;
+if($jobId){$st=$pdo->prepare("SELECT * FROM jobs WHERE id=?");$st->execute([$jobId]);$job=$st->fetch();if($job)$job=localizedJob($job);}
+$message=''; $error='';
+if($_SERVER['REQUEST_METHOD']==='POST'){
+ if(!isset($_FILES['cv']) || $_FILES['cv']['error']!==UPLOAD_ERR_OK){$error=t('cv_choose_error');}
+ else { $f=$_FILES['cv']; $ext=strtolower(pathinfo($f['name'],PATHINFO_EXTENSION)); $allowed=['pdf','doc','docx']; if(!in_array($ext,$allowed,true)){$error=t('cv_type_error');} elseif($f['size']>5*1024*1024){$error=t('cv_size_error');} else { $name='cv_'.$_SESSION['user_id'].'_'.time().'.'.$ext; $dir=__DIR__.'/../uploads/cv'; if(!is_dir($dir)) mkdir($dir,0775,true); move_uploaded_file($f['tmp_name'],$dir.'/'.$name); if($jobId){$st=$pdo->prepare("INSERT INTO job_applications(user_id,job_id,cv_path,cover_letter) VALUES(?,?,?,?) ON DUPLICATE KEY UPDATE cv_path=VALUES(cv_path),cover_letter=VALUES(cover_letter),status='pending'");$st->execute([$_SESSION['user_id'],$jobId,'uploads/cv/'.$name,trim($_POST['cover_letter']??'')]);} else {$st=$pdo->prepare("INSERT INTO general_cv_submissions(user_id,cv_path,cover_letter) VALUES(?,?,?)");$st->execute([$_SESSION['user_id'],'uploads/cv/'.$name,trim($_POST['cover_letter']??'')]);} $message=t('cv_success'); } }
+}
+$pageTitle=t('cv_submission'); require __DIR__.'/../includes/header.php'; ?>
+<section class="section"><div class="container" style="max-width:760px"><div class="card"><h1><?= $job ? t('apply').' · '.e($job['title']) : t('submit_cv') ?></h1><p class="muted"><?=t('upload_cv')?></p><?php if($message):?><div class="card" style="border-left:4px solid #6d35cf"><?=e($message)?></div><?php endif;?><?php if($error):?><div class="card" style="border-left:4px solid #c44;color:#a33"><?=e($error)?></div><?php endif;?><form method="post" enctype="multipart/form-data"><input type="hidden" name="job_id" value="<?=$jobId?>"><div class="field"><label><?=t('cv_formats')?></label><input type="file" name="cv" accept=".pdf,.doc,.docx" required></div><div class="field"><label><?=t('cover_letter')?></label><textarea name="cover_letter" rows="7" placeholder="<?=e(t('cover_letter_placeholder'))?>"></textarea></div><button class="btn" type="submit"><?=t('submit_cv')?></button></form></div></div></section>
+<?php require __DIR__.'/../includes/footer.php'; ?>

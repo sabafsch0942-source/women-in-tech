@@ -1,0 +1,9 @@
+<?php
+require_once __DIR__.'/../includes/bootstrap.php'; requireLogin();
+$courseId=(int)($_GET['course_id']??0);$s=$pdo->prepare("SELECT c.*,u.name instructor FROM courses c LEFT JOIN users u ON u.id=c.teacher_id WHERE c.id=?");$s->execute([$courseId]);$course=$s->fetch();if(!$course)die(t('course_not_found'));
+if($_SERVER['REQUEST_METHOD']==='POST' && trim($_POST['message']??'')!==''){$s=$pdo->prepare("INSERT INTO messages(course_id,sender_id,message) VALUES(?,?,?)");$s->execute([$courseId,$_SESSION['user_id'],trim($_POST['message'])]);}
+$m=$pdo->prepare("SELECT m.*,u.name FROM messages m JOIN users u ON u.id=m.sender_id WHERE m.course_id=? ORDER BY m.created_at");$m->execute([$courseId]);$messages=$m->fetchAll();
+$pageTitle=t('ask_teacher');require __DIR__.'/../includes/header.php';?>
+<section class="section"><div class="container"><a class="muted" href="/women_in_tech_php/courses/details.php?id=<?=$courseId?>&lang=<?=e($lang)?>">← <?=t('courses')?></a><h1><?=t('ask_teacher')?> · <?=e($course[localizedColumn('title')])?></h1><div class="card chat-box"><div class="messages" id="messages"><?php foreach($messages as $m):?><div class="msg <?=$m['sender_id']===$_SESSION['user_id']?'me':''?>"><strong><?=e($m['name'])?></strong><div><?=nl2br(e($m['message']))?></div><small><?=e($m['created_at'])?></small></div><?php endforeach;?></div><form method="post" class="chat-form"><input name="message" placeholder="<?=t('message')?>" required><button class="btn" type="submit"><?=t('send')?></button></form></div></div></section>
+<script>const box=document.getElementById('messages');if(box)box.scrollTop=box.scrollHeight;</script>
+<?php require __DIR__.'/../includes/footer.php'; ?>

@@ -1,0 +1,7 @@
+IMPORTANT:
+Replace this exact file in your existing project:
+C:\xampp\htdocs\women_in_tech_php\courses\index.php
+
+Do NOT put this file inside another women_in_tech_php folder.
+After replacing it, press Ctrl+F5 in the browser.
+The page will show a yellow "COURSES PAGE FIX v3" banner if the correct file is being used.

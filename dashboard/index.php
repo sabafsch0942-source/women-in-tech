@@ -1,0 +1,6 @@
+<?php
+require_once __DIR__.'/../includes/bootstrap.php';requireLogin();
+$s=$pdo->prepare("SELECT e.*,c.* FROM enrollments e JOIN courses c ON c.id=e.course_id WHERE e.user_id=? ORDER BY e.enrolled_at DESC");$s->execute([$_SESSION['user_id']]);$courses=$s->fetchAll();
+$pageTitle=t('dashboard');require __DIR__.'/../includes/header.php';?>
+<section class="section"><div class="container"><h1><?=t('welcome')?>, <?=e($_SESSION['user']['name'])?> 👋</h1><p class="muted"><?=t('my_courses')?></p><div class="dashboard-grid"><?php foreach($courses as $c):?><article class="card"><span class="pill"><?=$c['status']==='paid'?t('paid_status'):t('pending')?></span><h3><?=e($c[localizedColumn('title')])?></h3><div class="progressbar"><span style="width:<?=min(100,(int)$c['progress_percent'])?>%"></span></div><p class="muted"><?=t('progress')?>: <?=$c['progress_percent']?>%</p><a class="btn" href="/women_in_tech_php/courses/details.php?id=<?=$c['course_id']?>&lang=<?=e($lang)?>"><?=t('continue_learning')?></a></article><?php endforeach;?></div><?php if(!$courses):?><div class="card" style="margin-top:20px"><p><?=t('my_courses')?>: 0</p><a class="btn" href="/women_in_tech_php/courses/index.php?lang=<?=e($lang)?>"><?=t('explore_courses')?></a></div><?php endif;?></div></section>
+<?php require __DIR__.'/../includes/footer.php'; ?>
